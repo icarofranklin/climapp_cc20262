@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:climapp_cc20262/src/enums/enviroments_enum.dart';
 import 'package:climapp_cc20262/src/models/weather_forecast_model.dart';
@@ -9,6 +10,7 @@ class ListCityController extends ChangeNotifier {
   List<WeatherForecastModel> allCities = [];
   List<WeatherForecastModel> filteredCities = [];
   bool isLoading = true;
+  bool hasConnectionError = false;
 
   final listCitySearch = [
     'Aracaju,SE',
@@ -19,12 +21,17 @@ class ListCityController extends ChangeNotifier {
 
   Future<void> loadCities() async {
     isLoading = true;
+    hasConnectionError = false;
     notifyListeners();
     try {
       allCities = await getWeatherForecast();
       filteredCities = List.from(allCities);
+    } on SocketException catch (_) {
+      hasConnectionError = true;
+    } on http.ClientException catch (_) {
+      hasConnectionError = true;
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
     } finally {
       isLoading = false;
       notifyListeners();
@@ -54,7 +61,7 @@ class ListCityController extends ChangeNotifier {
           '${enumEnv.API_BASE_URL}?key=${enumEnv.API_KEY}&city_name=$city',
         ),
       );
-      if (response.statusCode >= 200 || response.statusCode < 300) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
         final jsonDecoded = jsonDecode(response.body)['results'];
         final model = WeatherForecastModel.fromJson(jsonDecoded);
         listCity.add(model);
