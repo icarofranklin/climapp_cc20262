@@ -2,8 +2,15 @@ import 'package:climapp_cc20262/src/screens/list_city_screen.dart';
 import 'package:climapp_cc20262/src/utils/locale_helper.dart';
 import 'package:flutter/material.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  late final Future<String> _country = LocaleHelper.getCountryFromLocation();
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +42,9 @@ class WelcomeScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ListCityScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const ListCityScreen(),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -54,12 +63,13 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                LocaleHelper.getCountryNameAndFlag(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
+              FutureBuilder<String>(
+                future: _country,
+                initialData: LocaleHelper.getCountryNameAndFlag(),
+                builder: (context, snapshot) => Text(
+                  snapshot.data ?? '',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ),
               const Spacer(),
