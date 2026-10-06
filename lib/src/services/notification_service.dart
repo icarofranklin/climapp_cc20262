@@ -1,5 +1,6 @@
 // lib/src/services/notification_service.dart
 import 'package:flutter/material.dart';
+import 'package:climapp_cc20262/src/screens/list_city_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService {
@@ -97,10 +98,9 @@ class NotificationService {
   }
 
   void _handleDeepLink(RemoteMessage message) {
-    final city = message.data['city'];
-    if (city != null) {
-      // TODO: implementar navegação por notificação quando as rotas existirem
-      debugPrint('Navegação para a cidade $city via push notification não implementada ainda.');
-    }
+    // Ao tocar na notificação, abre a lista de cidades.
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (context) => const ListCityScreen()),
+    );
   }
 }
