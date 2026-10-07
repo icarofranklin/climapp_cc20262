@@ -1,19 +1,28 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:climapp_cc20262/src/enums/enviroments_enum.dart';
 import 'package:climapp_cc20262/src/models/weather_forecast_model.dart';
+import 'package:climapp_cc20262/src/services/device_info_service.dart';
+import 'package:climapp_cc20262/src/services/weather_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class ListCityController extends ChangeNotifier {
+  ListCityController({
+    required this.deviceInfoService,
+    required this.weatherService,
+  });
+
+  final WeatherService weatherService;
+  final DeviceInfoService deviceInfoService;
+
+  String _deviceCountry = '';
+  String get deviceCountry => _deviceCountry;
   List<WeatherForecastModel> allCities = [];
   List<WeatherForecastModel> filteredCities = [];
   bool isLoading = true;
+  String errorMessage = '';
   bool hasConnectionError = false;
-
-  static const _requestTimeout = Duration(seconds: 10);
 
   final listCitySearch = [
     'Aracaju,SE',
@@ -21,22 +30,29 @@ class ListCityController extends ChangeNotifier {
     'Salvador,BA',
     'Curitiba,PR',
   ];
-
   Future<void> loadCities() async {
     isLoading = true;
+    errorMessage = '';
     hasConnectionError = false;
     notifyListeners();
+
+    _deviceCountry = await deviceInfoService.getDeviceCountry();
+
     try {
-      allCities = await getWeatherForecast();
+      allCities = await weatherService.getWeatherForecast(listCitySearch);
       filteredCities = List.from(allCities);
     } on SocketException catch (_) {
       hasConnectionError = true;
     } on http.ClientException catch (_) {
       hasConnectionError = true;
-    } on TimeoutException catch (_) {
+    } on TimeoutException catch (e) {
+      errorMessage = e.message ?? 'Tempo de resposta esgotado';
+      hasConnectionError = true;
+    } on HttpException catch (e) {
+      errorMessage = e.message;
       hasConnectionError = true;
     } catch (e) {
-      // Resposta inválida ou erro do servidor: mostra a tela de tentar novamente.
+      // Resposta inválida: mostra a tela de tentar novamente.
       debugPrint(e.toString());
       hasConnectionError = true;
     } finally {
@@ -56,28 +72,5 @@ class ListCityController extends ChangeNotifier {
           .toList();
     }
     notifyListeners();
-  }
-
-  Future<List<WeatherForecastModel>> getWeatherForecast() async {
-    final enumEnv = EnviromentEnum.constants;
-    final List<WeatherForecastModel> listCity = [];
-
-    for (var city in listCitySearch) {
-      final response = await http
-          .get(
-            Uri.parse(
-              '${enumEnv.API_BASE_URL}?key=${enumEnv.API_KEY}&city_name=$city',
-            ),
-          )
-          .timeout(_requestTimeout);
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final jsonDecoded = jsonDecode(response.body)['results'];
-        final model = WeatherForecastModel.fromJson(jsonDecoded);
-        listCity.add(model);
-      } else {
-        throw Exception('Erro ao carregar dados');
-      }
-    }
-    return listCity;
   }
 }

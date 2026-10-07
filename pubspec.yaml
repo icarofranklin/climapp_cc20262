@@ -44,6 +44,7 @@ dependencies:
   firebase_core: ^4.14.0
   firebase_messaging: ^16.6.0
   geocoding: ^5.0.0
+  provider: ^6.1.5+1
 
 dev_dependencies:
   flutter_test:

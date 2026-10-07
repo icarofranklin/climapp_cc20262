@@ -3,29 +3,26 @@ import 'package:climapp_cc20262/src/screens/weather_city_screen.dart';
 import 'package:climapp_cc20262/src/widgets/city_tile_widget.dart';
 import 'package:climapp_cc20262/src/widgets/no_connection_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ListCityScreen extends StatefulWidget {
   const ListCityScreen({super.key});
 
   @override
-  _ListCityScreenState createState() => _ListCityScreenState();
+  State<ListCityScreen> createState() => _ListCityScreenState();
 }
 
 class _ListCityScreenState extends State<ListCityScreen> {
   final TextEditingController textController = TextEditingController();
 
-  final ListCityController controller = ListCityController();
-
   @override
   void initState() {
     super.initState();
-    controller.loadCities();
   }
 
   @override
   void dispose() {
     textController.dispose();
-    controller.dispose();
     super.dispose();
   }
 
@@ -33,7 +30,7 @@ class _ListCityScreenState extends State<ListCityScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: DecoratedBox(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: <Color>[Color(0xFF00457D), Color(0xFF05051F)],
             begin: Alignment.topCenter,
@@ -41,32 +38,33 @@ class _ListCityScreenState extends State<ListCityScreen> {
           ),
         ),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
-            mainAxisSize: .max,
+            mainAxisSize: MainAxisSize.max,
             children: [
               const SizedBox(height: 25),
               TextField(
                 style: const TextStyle(color: Colors.white),
                 controller: textController,
-                onChanged: controller.filterCities,
+                onChanged: (query) {
+                  context.read<ListCityController>().filterCities(query);
+                },
                 decoration: const InputDecoration(
-                  fillColor: Color(0xff15ffffff),
+                  fillColor: Color(0x15FFFFFF),
                   filled: true,
                   hintText: 'Digite uma cidade',
                   hintStyle: TextStyle(color: Colors.white),
                   suffixIcon: Icon(Icons.search, color: Colors.white),
                   border: OutlineInputBorder(
-                    borderSide: .none,
+                    borderSide: BorderSide.none,
                     borderRadius: BorderRadius.all(Radius.circular(30)),
                   ),
                 ),
               ),
               const SizedBox(height: 15),
               Expanded(
-                child: ListenableBuilder(
-                  listenable: controller,
-                  builder: (context, _) {
+                child: Consumer<ListCityController>(
+                  builder: (context, controller, child) {
                     if (controller.hasConnectionError) {
                       return NoConnectionWidget(onRetry: controller.loadCities);
                     }
